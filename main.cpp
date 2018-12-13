@@ -35,6 +35,16 @@ string intToStringConversion (int number)
     return str;
 }
 
+string changeFirstLetterToLargeAndRestToSmall(string text)
+{
+    if (!text.empty())
+    {
+        transform(text.begin(), text.end(), text.begin(), ::tolower);
+        text[0] = toupper(text[0]);
+    }
+    return text;
+}
+
 void saveContactToFile (Contact singleContact)
 {
     fstream addressBook;
@@ -71,8 +81,10 @@ void addContact(vector<Contact> &contacts)
 
     cout << "Podaj imie: " << endl;
     singleContact.firstName = loadText();
+    singleContact.firstName = changeFirstLetterToLargeAndRestToSmall(singleContact.firstName);
     cout << "Podaj nazwisko: " << endl;
     singleContact.lastName = loadText();
+    singleContact.lastName = changeFirstLetterToLargeAndRestToSmall(singleContact.lastName);
     cout << "Podaj telefon: " << endl;
     singleContact.phoneNumber = loadText();
     cout << "Podaj email: " << endl;
@@ -96,6 +108,8 @@ void searchByFirstName(vector <Contact> &contacts)
         cout << "Podaj imie: ";
 
         firstName = loadText();
+
+        firstName = changeFirstLetterToLargeAndRestToSmall(firstName);
 
         for (vector<Contact>::iterator itr = contacts.begin(); itr != contacts.end(); itr ++)
         {
@@ -134,6 +148,8 @@ void searchByLastName(vector <Contact> &contacts)
         cout << "Podaj nazwisko: ";
 
         lastName = loadText();
+
+        lastName = changeFirstLetterToLargeAndRestToSmall(lastName);
 
         for (vector<Contact>::iterator itr = contacts.begin(); itr != contacts.end(); itr ++)
         {
@@ -346,12 +362,14 @@ void editContact (vector<Contact> &contacts)
                 case '1':
                     cout << "Podaj nowe imie: ";
                     itr->firstName = loadText();
+                    itr->firstName = changeFirstLetterToLargeAndRestToSmall(itr->firstName);
                     cout << endl << "Imie zostalo zmienione" << endl;
                     saveAllContactsToFile(contacts);
                     break;
                 case '2':
                     cout << "Podaj nowe nazwisko: ";
                     itr->lastName = loadText();
+                    itr->lastName = changeFirstLetterToLargeAndRestToSmall(itr->lastName);
                     cout << endl << "Nazwisko zostalo zmienione" << endl;
                     saveAllContactsToFile(contacts);
                     break;

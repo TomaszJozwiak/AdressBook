@@ -3,14 +3,21 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <cstdio>
 #include <algorithm>
 
 using namespace std;
 
 struct Contact
 {
-    int id = 0;
+    int id = 0, userID = 0;
     string firstName = "", lastName = "", phoneNumber = "", email = "", address = "";
+};
+
+struct User
+{
+    int id = 0;
+    string name = "", password = "";
 };
 
 string loadText()
@@ -53,21 +60,40 @@ void saveContactToFile (Contact singleContact)
     if(addressBook.good() == true)
     {
         addressBook << singleContact.id << '|';
+        addressBook << singleContact.userID << '|';
         addressBook << singleContact.firstName << '|';
         addressBook << singleContact.lastName << '|';
         addressBook << singleContact.phoneNumber << '|';
         addressBook << singleContact.email << '|';
-        addressBook << singleContact.address << '|';
+        addressBook << singleContact.address << '|' << endl;
         addressBook.close();
 
         cout << "Kontakt dodany" << endl;
+    }
+    else
+        cout << "Nie udalo sie otworzyc pliku" << endl;
+}
+
+void saveUserToFile (User singleUser)
+{
+    fstream usersList;
+    usersList.open("Users.txt", ios::out | ios::app);
+
+    if(usersList.good() == true)
+    {
+        usersList << singleUser.id << '|';
+        usersList << singleUser.name << '|';
+        usersList << singleUser.password << '|' << endl;
+        usersList.close();
+
+        cout << "Uzytkownik zarejestrowany" << endl;
         system("pause");
     }
     else
         cout << "Nie udalo sie otworzyc pliku" << endl;
 }
 
-void addContact(vector<Contact> &contacts)
+void addContact(vector<Contact> &contacts, int userID)
 {
     Contact singleContact;
 
@@ -78,6 +104,7 @@ void addContact(vector<Contact> &contacts)
         singleContact.id = 1;
     else
         singleContact.id = contacts.back().id + 1;
+    singleContact.userID = userID;
 
     cout << "Podaj imie: " << endl;
     singleContact.firstName = loadText();
@@ -94,6 +121,80 @@ void addContact(vector<Contact> &contacts)
 
     contacts.push_back(singleContact);
     saveContactToFile(singleContact);
+}
+
+
+void userRegistration(vector<User> &users)
+{
+    User singleUser;
+
+    system("cls");
+    cout << "Dodawanie uzytkownika" << endl;
+
+    if (users.empty() == true)
+        singleUser.id = 1;
+    else
+        singleUser.id = users.back().id + 1;
+
+    cout << "Podaj nazwe: " << endl;
+    singleUser.name = loadText();
+
+    for (vector<User>::iterator itr = users.begin(); itr != users.end(); itr ++)
+    {
+        if (itr->name == singleUser.name)
+        {
+            cout << "Nazwa uzytkownika juz istnieje. Wprowadz nowa nazwe: ";
+            singleUser.name = loadText();
+            itr = users.begin();
+        }
+    }
+
+    cout << "Podaj haslo: " << endl;
+    singleUser.password = loadText();
+
+    users.push_back(singleUser);
+    saveUserToFile(singleUser);
+}
+
+int login(vector<User> &users)
+{
+    string name = "";
+    string password = "";
+
+    system("cls");
+    if(!users.empty())
+    {
+        cout << "Podaj nazwe uzytkownika: " << endl;
+        name = loadText();
+
+        for (vector<User>::iterator itr = users.begin(); itr != users.end(); itr ++)
+        {
+            if (itr->name == name)
+            {
+                for (int attempt = 0; attempt < 3; attempt ++)
+                {
+                    cout << "Podaj haslo. Pozostalo prob " << 3 - attempt << ": ";
+                    password = loadText();
+
+                    if (itr->password == password)
+                    {
+                        cout << "Zalogowales sie" << endl;
+                        system("pause");
+                        return itr->id;
+                    }
+                }
+                cout << "Podales 3 razy zle haslo. Powrot do menu glownego" << endl;
+                system("pause");
+                return 0;
+            }
+        }
+        cout << "Nie ma uzytkownika z takim loginem" << endl;
+        system("pause");
+        return 0;
+    }
+    cout << "Brak uzytkownikow w systemie" << endl;
+    system("pause");
+    return 0;
 }
 
 void searchByFirstName(vector <Contact> &contacts)
@@ -203,32 +304,6 @@ void showAllContacts(vector <Contact> &contacts)
     system("pause");
 }
 
-void saveAllContactsToFile (vector<Contact> &contacts)
-{
-    fstream addressBook;
-    string lineWithContactData = "";
-    addressBook.open("AddressBook.txt", ios::out);
-
-    if(addressBook.good() == true)
-    {
-        for (vector<Contact>::iterator itr = contacts.begin(); itr != contacts.end(); itr ++)
-        {
-            lineWithContactData += intToStringConversion(itr->id) + '|';
-            lineWithContactData += itr->firstName + '|';
-            lineWithContactData += itr->lastName + '|';
-            lineWithContactData += itr->phoneNumber + '|';
-            lineWithContactData += itr->email + '|';
-            lineWithContactData += itr->address + '|';
-
-            addressBook << lineWithContactData << endl;
-            lineWithContactData = "";
-        }
-        addressBook.close();
-    }
-    else
-        cout << "Nie udalo sie zapisac kontaktow do pliku" << endl;
-}
-
 Contact getContactData (string contactDataFromOneLine)
 {
     Contact singleContact;
@@ -246,18 +321,21 @@ Contact getContactData (string contactDataFromOneLine)
                 singleContact.id = atoi(singleContactData.c_str());
                 break;
             case 2:
-                singleContact.firstName = singleContactData;
+                singleContact.userID = atoi(singleContactData.c_str());
                 break;
             case 3:
-                singleContact.lastName = singleContactData;
+                singleContact.firstName = singleContactData;
                 break;
             case 4:
-                singleContact.phoneNumber = singleContactData;
+                singleContact.lastName = singleContactData;
                 break;
             case 5:
-                singleContact.email = singleContactData;
+                singleContact.phoneNumber = singleContactData;
                 break;
             case 6:
+                singleContact.email = singleContactData;
+                break;
+            case 7:
                 singleContact.address = singleContactData;
                 break;
             }
@@ -267,7 +345,36 @@ Contact getContactData (string contactDataFromOneLine)
     return singleContact;
 }
 
-void loadContactsFromFile (vector<Contact> &contacts)
+User getUserData (string userDataFromOneLine)
+{
+    User singleUser;
+    string singleUserData = "";
+    int dataNumber = 1;
+
+    for (int letterPosition = 0; letterPosition < userDataFromOneLine.length(); letterPosition++)
+        if (userDataFromOneLine[letterPosition] != '|')
+            singleUserData += userDataFromOneLine[letterPosition];
+        else
+        {
+            switch(dataNumber)
+            {
+            case 1:
+                singleUser.id = atoi(singleUserData.c_str());
+                break;
+            case 2:
+                singleUser.name = singleUserData;
+                break;
+            case 3:
+                singleUser.password = singleUserData;
+                break;
+            }
+            singleUserData = "";
+            dataNumber++;
+        }
+    return singleUser;
+}
+
+void loadContactsFromFile (vector<Contact> &contacts, int userID)
 {
     Contact singleContact;
     string contactDataFromOneLine;
@@ -280,10 +387,150 @@ void loadContactsFromFile (vector<Contact> &contacts)
         while(getline(addressBook, contactDataFromOneLine))
         {
             singleContact = getContactData(contactDataFromOneLine);
-            contacts.push_back(singleContact);
+            if (singleContact.userID == userID)
+            {
+                contacts.push_back(singleContact);
+            }
         }
         addressBook.close();
     }
+}
+
+void loadUsersFromFile (vector<User> &users)
+{
+    User singleUser;
+    string userDataFromOneLine;
+
+    fstream usersList;
+    usersList.open("Users.txt", ios::in);
+
+    if(usersList.good()==true)
+    {
+        while(getline(usersList, userDataFromOneLine))
+        {
+            singleUser = getUserData(userDataFromOneLine);
+            users.push_back(singleUser);
+        }
+        usersList.close();
+    }
+}
+
+void changePassword(vector<User> &users, int userID)
+{
+    system("cls");
+    for (vector<User>::iterator itr = users.begin(); itr != users.end(); itr++)
+    {
+        if (itr->id == userID)
+        {
+            cout << "Podaj nowe haslo: ";
+            itr->password = loadText();
+            cout << "Haslo zostalo zmienione" << endl;
+            system("pause");
+        }
+    }
+    saveAllUsersToFile (users);
+}
+
+Contact getSingleContactData(vector<Contact> &contacts, int contactID)
+{
+    Contact singleContact;
+
+    for (vector<Contact>::iterator itr = contacts.begin(); itr != contacts.end(); itr ++)
+    {
+        if (itr->id == contactID)
+        {
+
+            singleContact.id = itr->id;
+            singleContact.userID = itr->userID;
+            singleContact.firstName = itr->firstName;
+            singleContact.lastName = itr->lastName;
+            singleContact.phoneNumber = itr->phoneNumber;
+            singleContact.email = itr->email;
+            singleContact.address = itr->address;
+        }
+    }
+    return singleContact;
+}
+
+void saveContactToTemporaryFile (Contact singleContact)
+{
+    fstream addressTemporaryBook;
+    addressTemporaryBook.open("AddressBook_temporary.txt", ios::out | ios::app);
+
+    if(addressTemporaryBook.good() == true)
+    {
+        addressTemporaryBook << singleContact.id << '|';
+        addressTemporaryBook << singleContact.userID << '|';
+        addressTemporaryBook << singleContact.firstName << '|';
+        addressTemporaryBook << singleContact.lastName << '|';
+        addressTemporaryBook << singleContact.phoneNumber << '|';
+        addressTemporaryBook << singleContact.email << '|';
+        addressTemporaryBook << singleContact.address << '|' << endl;
+        addressTemporaryBook.close();
+    }
+    else
+        cout << "Nie udalo sie otworzyc pliku" << endl;
+}
+
+void saveEditedFiles (vector<Contact> contacts, int contactID)
+{
+    Contact editedContact = getSingleContactData(contacts, contactID);
+    Contact contactFromTextFile;
+    string loadedLine = "";
+
+    fstream addressBookEditingFiles;
+
+    addressBookEditingFiles.open("AddressBook.txt", ios::in);
+
+
+    if(addressBookEditingFiles.good() == true)
+    {
+        while(getline(addressBookEditingFiles, loadedLine))
+        {
+            contactFromTextFile = getContactData (loadedLine);
+            if (contactFromTextFile.id == contactID)
+            {
+                saveContactToTemporaryFile (editedContact);
+            }
+            else
+            {
+                saveContactToTemporaryFile (contactFromTextFile);
+            }
+        }
+        addressBookEditingFiles.close();
+        remove("AddressBook.txt");
+        rename ("AddressBook_temporary.txt", "AddressBook.txt");
+    }
+    else
+        cout << "Nie udalo sie otworzyc pliku" << endl;
+
+}
+
+void saveDelatedFiles (int contactID)
+{
+    Contact contactFromTextFile;
+    string loadedLine = "";
+
+    fstream addressBookSavedFiles;
+
+    addressBookSavedFiles.open("AddressBook.txt", ios::in);
+
+    if(addressBookSavedFiles.good() == true)
+    {
+        while(getline(addressBookSavedFiles, loadedLine))
+        {
+            contactFromTextFile = getContactData (loadedLine);
+            if (contactFromTextFile.id != contactID)
+            {
+                saveContactToTemporaryFile (contactFromTextFile);
+            }
+        }
+        addressBookSavedFiles.close();
+        remove("AddressBook.txt");
+        rename ("AddressBook_temporary.txt", "AddressBook.txt");
+    }
+    else
+        cout << "Nie udalo sie otworzyc pliku 13" << endl;
 }
 
 void deleteContact(vector<Contact> &contacts)
@@ -308,9 +555,9 @@ void deleteContact(vector<Contact> &contacts)
                 cin >> sign;
                 if (sign == 't')
                 {
+                    saveDelatedFiles(idOfDeletedContact);
                     itr = contacts.erase(itr);
                     cout << endl << "Kontakt usuniety" << endl;
-                    saveAllContactsToFile(contacts);
                     break;
                 }
                 else
@@ -364,32 +611,32 @@ void editContact (vector<Contact> &contacts)
                     itr->firstName = loadText();
                     itr->firstName = changeFirstLetterToLargeAndRestToSmall(itr->firstName);
                     cout << endl << "Imie zostalo zmienione" << endl;
-                    saveAllContactsToFile(contacts);
+                    saveEditedFiles (contacts, contactID);
                     break;
                 case '2':
                     cout << "Podaj nowe nazwisko: ";
                     itr->lastName = loadText();
                     itr->lastName = changeFirstLetterToLargeAndRestToSmall(itr->lastName);
                     cout << endl << "Nazwisko zostalo zmienione" << endl;
-                    saveAllContactsToFile(contacts);
+                    saveEditedFiles (contacts, contactID);
                     break;
                 case '3':
                     cout << "Podaj nowy numer telefonu: ";
                     itr->phoneNumber = loadText();
                     cout << endl << "Numer telefonu zostal zmieniony" << endl;
-                    saveAllContactsToFile(contacts);
+                    saveEditedFiles (contacts, contactID);
                     break;
                 case '4':
                     cout << "Podaj nowy email: ";
                     itr->email = loadText();
                     cout << endl << "Email zostal zmieniony" << endl;
-                    saveAllContactsToFile(contacts);
+                    saveEditedFiles (contacts, contactID);
                     break;
                 case '5':
                     cout << "Podaj nowe adres: ";
                     itr->address = loadText();
                     cout << endl << "Adres zostal zmieniony" << endl;
-                    saveAllContactsToFile(contacts);
+                    saveEditedFiles (contacts, contactID);
                     break;
                 case '6':
                     cout << "Powrot do menu glownego" << endl;
@@ -409,50 +656,92 @@ void editContact (vector<Contact> &contacts)
 int main()
 {
     vector<Contact> contacts;
+    vector<User> users;
     char choiceFromMenu;
+    int menuView = 0;
+    int userID = 0;
 
-    loadContactsFromFile(contacts);
+    loadUsersFromFile (users);
 
     while (true)
     {
-        system("cls");
-        cout << "KSIAZKA ADRESOWA - MENU GLOWNE" << endl;
-        cout << "1. Dodaj adresata" << endl;
-        cout << "2. Wyszukaj po imieniu" << endl;
-        cout << "3. Wyszukaj na nazwisku" << endl;
-        cout << "4. Wyswietl wszystkich adresatow" << endl;
-        cout << "5. Usun adresata" << endl;
-        cout << "6. Edytuj adresata" << endl;
-        cout << "9. Wyjscie z programu" << endl;
-        cout << "Twoj wybor: ";
-        cin >> choiceFromMenu;
-
-        switch (choiceFromMenu)
+        if (menuView == 0)
         {
-        case '1':
-            addContact(contacts);
-            break;
-        case '2':
-            searchByFirstName(contacts);
-            break;
-        case '3':
-            searchByLastName(contacts);
-            break;
-        case '4':
-            showAllContacts(contacts);
-            break;
-        case '5':
-            deleteContact(contacts);
-            break;
-        case '6':
-            editContact (contacts);
-            break;
-        case '9':
-            exitProgram();
-            break;
-        default:
-            cout << "Polecenie niepoprawne. Wpisz cyfre z menu" << endl;
-            break;
+            system("cls");
+            cout << "KSIAZKA ADRESOWA - MENU GLOWNE" << endl;
+            cout << "1. Logowanie" << endl;
+            cout << "2. Rejestracja" << endl;
+            cout << "9. Wyjscie z programu" << endl;
+            cout << "Twoj wybor: ";
+            cin >> choiceFromMenu;
+
+            switch (choiceFromMenu)
+            {
+            case '1':
+                userID = login(users);
+                if (userID != 0)
+                {
+                    loadContactsFromFile(contacts, userID);
+                    menuView = 1;
+                }
+                break;
+            case '2':
+                userRegistration(users);
+                break;
+            case '9':
+                exitProgram();
+                break;
+            default:
+                cout << "Polecenie niepoprawne. Wpisz cyfre z menu" << endl;
+                break;
+            }
+        }
+        else if (menuView == 1)
+        {
+            system("cls");
+            cout << "KSIAZKA ADRESOWA - Menu po zalogowaniu " << endl;
+            cout << "1. Dodaj adresata" << endl;
+            cout << "2. Wyszukaj po imieniu" << endl;
+            cout << "3. Wyszukaj na nazwisku" << endl;
+            cout << "4. Wyswietl wszystkich adresatow" << endl;
+            cout << "5. Usun adresata" << endl;
+            cout << "6. Edytuj adresata" << endl;
+            cout << "7. Zmien haslo" << endl;
+            cout << "9. Wyloguj sie" << endl;
+            cout << "Twoj wybor: ";
+            cin >> choiceFromMenu;
+
+            switch (choiceFromMenu)
+            {
+            case '1':
+                addContact(contacts, userID);
+                break;
+            case '2':
+                searchByFirstName(contacts);
+                break;
+            case '3':
+                searchByLastName(contacts);
+                break;
+            case '4':
+                showAllContacts(contacts);
+                break;
+            case '5':
+                deleteContact(contacts);
+                break;
+            case '6':
+                editContact (contacts);
+                break;
+            case '7':
+                changePassword(users, userID);
+                break;
+            case '9':
+                menuView = 0;
+                contacts.clear();
+                break;
+            default:
+                cout << "Polecenie niepoprawne. Wpisz cyfre z menu" << endl;
+                break;
+            }
         }
     }
     return 0;

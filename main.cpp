@@ -93,6 +93,103 @@ void saveUserToFile (User singleUser)
         cout << "Nie udalo sie otworzyc pliku" << endl;
 }
 
+Contact getContactData (string contactDataFromOneLine)
+{
+    Contact singleContact;
+    string singleContactData = "";
+    int dataNumber = 1;
+
+    for (int letterPosition = 0; letterPosition < contactDataFromOneLine.length(); letterPosition++)
+        if (contactDataFromOneLine[letterPosition] != '|')
+            singleContactData += contactDataFromOneLine[letterPosition];
+        else
+        {
+            switch(dataNumber)
+            {
+            case 1:
+                singleContact.id = atoi(singleContactData.c_str());
+                break;
+            case 2:
+                singleContact.userID = atoi(singleContactData.c_str());
+                break;
+            case 3:
+                singleContact.firstName = singleContactData;
+                break;
+            case 4:
+                singleContact.lastName = singleContactData;
+                break;
+            case 5:
+                singleContact.phoneNumber = singleContactData;
+                break;
+            case 6:
+                singleContact.email = singleContactData;
+                break;
+            case 7:
+                singleContact.address = singleContactData;
+                break;
+            }
+            singleContactData = "";
+            dataNumber++;
+        }
+    return singleContact;
+}
+
+User getUserData (string userDataFromOneLine)
+{
+    User singleUser;
+    string singleUserData = "";
+    int dataNumber = 1;
+
+    for (int letterPosition = 0; letterPosition < userDataFromOneLine.length(); letterPosition++)
+        if (userDataFromOneLine[letterPosition] != '|')
+            singleUserData += userDataFromOneLine[letterPosition];
+        else
+        {
+            switch(dataNumber)
+            {
+            case 1:
+                singleUser.id = atoi(singleUserData.c_str());
+                break;
+            case 2:
+                singleUser.name = singleUserData;
+                break;
+            case 3:
+                singleUser.password = singleUserData;
+                break;
+            }
+            singleUserData = "";
+            dataNumber++;
+        }
+    return singleUser;
+}
+
+
+int getContactID ()
+{
+    Contact singleContact;
+    string contactDataFromOneLine;
+    int contactID = 0;
+
+    fstream addressBook;
+    addressBook.open("AddressBook.txt", ios::in);
+
+    if(addressBook.good()==true)
+    {
+        while(getline(addressBook, contactDataFromOneLine))
+        {
+            singleContact = getContactData(contactDataFromOneLine);
+            contactID = singleContact.id;
+        }
+        addressBook.close();
+    }
+    else
+        cout << "Nie udalo sie otworzyc pliku" << endl;
+
+
+    return contactID;
+}
+
+
 void addContact(vector<Contact> &contacts, int userID)
 {
     Contact singleContact;
@@ -100,12 +197,12 @@ void addContact(vector<Contact> &contacts, int userID)
     system("cls");
     cout << "Dodawanie adresata" << endl;
 
-    if (contacts.empty() == true)
+    if (getContactID() == 0)
         singleContact.id = 1;
     else
-        singleContact.id = contacts.back().id + 1;
-    singleContact.userID = userID;
+        singleContact.id = getContactID() + 1;
 
+    singleContact.userID = userID;
     cout << "Podaj imie: " << endl;
     singleContact.firstName = loadText();
     singleContact.firstName = changeFirstLetterToLargeAndRestToSmall(singleContact.firstName);
@@ -304,75 +401,6 @@ void showAllContacts(vector <Contact> &contacts)
     system("pause");
 }
 
-Contact getContactData (string contactDataFromOneLine)
-{
-    Contact singleContact;
-    string singleContactData = "";
-    int dataNumber = 1;
-
-    for (int letterPosition = 0; letterPosition < contactDataFromOneLine.length(); letterPosition++)
-        if (contactDataFromOneLine[letterPosition] != '|')
-            singleContactData += contactDataFromOneLine[letterPosition];
-        else
-        {
-            switch(dataNumber)
-            {
-            case 1:
-                singleContact.id = atoi(singleContactData.c_str());
-                break;
-            case 2:
-                singleContact.userID = atoi(singleContactData.c_str());
-                break;
-            case 3:
-                singleContact.firstName = singleContactData;
-                break;
-            case 4:
-                singleContact.lastName = singleContactData;
-                break;
-            case 5:
-                singleContact.phoneNumber = singleContactData;
-                break;
-            case 6:
-                singleContact.email = singleContactData;
-                break;
-            case 7:
-                singleContact.address = singleContactData;
-                break;
-            }
-            singleContactData = "";
-            dataNumber++;
-        }
-    return singleContact;
-}
-
-User getUserData (string userDataFromOneLine)
-{
-    User singleUser;
-    string singleUserData = "";
-    int dataNumber = 1;
-
-    for (int letterPosition = 0; letterPosition < userDataFromOneLine.length(); letterPosition++)
-        if (userDataFromOneLine[letterPosition] != '|')
-            singleUserData += userDataFromOneLine[letterPosition];
-        else
-        {
-            switch(dataNumber)
-            {
-            case 1:
-                singleUser.id = atoi(singleUserData.c_str());
-                break;
-            case 2:
-                singleUser.name = singleUserData;
-                break;
-            case 3:
-                singleUser.password = singleUserData;
-                break;
-            }
-            singleUserData = "";
-            dataNumber++;
-        }
-    return singleUser;
-}
 
 void saveAllUsersToFile (vector<User> &users)
 {

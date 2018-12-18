@@ -374,6 +374,30 @@ User getUserData (string userDataFromOneLine)
     return singleUser;
 }
 
+void saveAllUsersToFile (vector<User> &users)
+{
+    fstream usersList;
+    string lineWithContactData = "";
+    usersList.open("Users.txt", ios::out);
+
+    if(usersList.good() == true)
+    {
+        for (vector<User>::iterator itr = users.begin(); itr != users.end(); itr ++)
+        {
+            lineWithContactData += intToStringConversion(itr->id) + '|';
+            lineWithContactData += itr->name + '|';
+            lineWithContactData += itr->password + '|';
+
+            usersList << lineWithContactData << endl;
+            lineWithContactData = "";
+        }
+        usersList.close();
+    }
+    else
+        cout << "Nie udalo sie zapisac kontaktow do pliku" << endl;
+}
+
+
 void loadContactsFromFile (vector<Contact> &contacts, int userID)
 {
     Contact singleContact;

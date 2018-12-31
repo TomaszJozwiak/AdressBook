@@ -14,10 +14,17 @@ struct Contact
     string firstName = "", lastName = "", phoneNumber = "", email = "", address = "";
 };
 
-struct User
+class User
 {
+    public:
     int id = 0;
     string name = "", password = "";
+
+    friend string loadText();
+    friend void saveUserToFile (User singleUser);
+    friend void userRegistration(vector<User> &users);
+    friend int login(vector<User> &users);
+
 };
 
 string loadText()

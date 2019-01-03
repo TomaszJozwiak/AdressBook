@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstdio>
 #include <algorithm>
+#include "user.h"
 
 using namespace std;
 
@@ -12,19 +13,6 @@ struct Contact
 {
     int id = 0, userID = 0;
     string firstName = "", lastName = "", phoneNumber = "", email = "", address = "";
-};
-
-class User
-{
-    public:
-    int id = 0;
-    string name = "", password = "";
-
-    friend string loadText();
-    friend void saveUserToFile (User singleUser);
-    friend void userRegistration(vector<User> &users);
-    friend int login(vector<User> &users);
-
 };
 
 string loadText()
@@ -81,25 +69,6 @@ void saveContactToFile (Contact singleContact)
         cout << "Nie udalo sie otworzyc pliku" << endl;
 }
 
-void saveUserToFile (User singleUser)
-{
-    fstream usersList;
-    usersList.open("Users.txt", ios::out | ios::app);
-
-    if(usersList.good() == true)
-    {
-        usersList << singleUser.id << '|';
-        usersList << singleUser.name << '|';
-        usersList << singleUser.password << '|' << endl;
-        usersList.close();
-
-        cout << "Uzytkownik zarejestrowany" << endl;
-        system("pause");
-    }
-    else
-        cout << "Nie udalo sie otworzyc pliku" << endl;
-}
-
 Contact getContactData (string contactDataFromOneLine)
 {
     Contact singleContact;
@@ -141,35 +110,6 @@ Contact getContactData (string contactDataFromOneLine)
     return singleContact;
 }
 
-User getUserData (string userDataFromOneLine)
-{
-    User singleUser;
-    string singleUserData = "";
-    int dataNumber = 1;
-
-    for (int letterPosition = 0; letterPosition < userDataFromOneLine.length(); letterPosition++)
-        if (userDataFromOneLine[letterPosition] != '|')
-            singleUserData += userDataFromOneLine[letterPosition];
-        else
-        {
-            switch(dataNumber)
-            {
-            case 1:
-                singleUser.id = atoi(singleUserData.c_str());
-                break;
-            case 2:
-                singleUser.name = singleUserData;
-                break;
-            case 3:
-                singleUser.password = singleUserData;
-                break;
-            }
-            singleUserData = "";
-            dataNumber++;
-        }
-    return singleUser;
-}
-
 
 int getContactID ()
 {
@@ -189,10 +129,6 @@ int getContactID ()
         }
         addressBook.close();
     }
-    else
-        cout << "Nie udalo sie otworzyc pliku" << endl;
-
-
     return contactID;
 }
 
@@ -227,79 +163,6 @@ void addContact(vector<Contact> &contacts, int userID)
     saveContactToFile(singleContact);
 }
 
-
-void userRegistration(vector<User> &users)
-{
-    User singleUser;
-
-    system("cls");
-    cout << "Dodawanie uzytkownika" << endl;
-
-    if (users.empty() == true)
-        singleUser.id = 1;
-    else
-        singleUser.id = users.back().id + 1;
-
-    cout << "Podaj nazwe: " << endl;
-    singleUser.name = loadText();
-
-    for (vector<User>::iterator itr = users.begin(); itr != users.end(); itr ++)
-    {
-        if (itr->name == singleUser.name)
-        {
-            cout << "Nazwa uzytkownika juz istnieje. Wprowadz nowa nazwe: ";
-            singleUser.name = loadText();
-            itr = users.begin();
-        }
-    }
-
-    cout << "Podaj haslo: " << endl;
-    singleUser.password = loadText();
-
-    users.push_back(singleUser);
-    saveUserToFile(singleUser);
-}
-
-int login(vector<User> &users)
-{
-    string name = "";
-    string password = "";
-
-    system("cls");
-    if(!users.empty())
-    {
-        cout << "Podaj nazwe uzytkownika: " << endl;
-        name = loadText();
-
-        for (vector<User>::iterator itr = users.begin(); itr != users.end(); itr ++)
-        {
-            if (itr->name == name)
-            {
-                for (int attempt = 0; attempt < 3; attempt ++)
-                {
-                    cout << "Podaj haslo. Pozostalo prob " << 3 - attempt << ": ";
-                    password = loadText();
-
-                    if (itr->password == password)
-                    {
-                        cout << "Zalogowales sie" << endl;
-                        system("pause");
-                        return itr->id;
-                    }
-                }
-                cout << "Podales 3 razy zle haslo. Powrot do menu glownego" << endl;
-                system("pause");
-                return 0;
-            }
-        }
-        cout << "Nie ma uzytkownika z takim loginem" << endl;
-        system("pause");
-        return 0;
-    }
-    cout << "Brak uzytkownikow w systemie" << endl;
-    system("pause");
-    return 0;
-}
 
 void searchByFirstName(vector <Contact> &contacts)
 {
@@ -409,30 +272,6 @@ void showAllContacts(vector <Contact> &contacts)
 }
 
 
-void saveAllUsersToFile (vector<User> &users)
-{
-    fstream usersList;
-    string lineWithContactData = "";
-    usersList.open("Users.txt", ios::out);
-
-    if(usersList.good() == true)
-    {
-        for (vector<User>::iterator itr = users.begin(); itr != users.end(); itr ++)
-        {
-            lineWithContactData += intToStringConversion(itr->id) + '|';
-            lineWithContactData += itr->name + '|';
-            lineWithContactData += itr->password + '|';
-
-            usersList << lineWithContactData << endl;
-            lineWithContactData = "";
-        }
-        usersList.close();
-    }
-    else
-        cout << "Nie udalo sie zapisac kontaktow do pliku" << endl;
-}
-
-
 void loadContactsFromFile (vector<Contact> &contacts, int userID)
 {
     Contact singleContact;
@@ -453,41 +292,6 @@ void loadContactsFromFile (vector<Contact> &contacts, int userID)
         }
         addressBook.close();
     }
-}
-
-void loadUsersFromFile (vector<User> &users)
-{
-    User singleUser;
-    string userDataFromOneLine;
-
-    fstream usersList;
-    usersList.open("Users.txt", ios::in);
-
-    if(usersList.good()==true)
-    {
-        while(getline(usersList, userDataFromOneLine))
-        {
-            singleUser = getUserData(userDataFromOneLine);
-            users.push_back(singleUser);
-        }
-        usersList.close();
-    }
-}
-
-void changePassword(vector<User> &users, int userID)
-{
-    system("cls");
-    for (vector<User>::iterator itr = users.begin(); itr != users.end(); itr++)
-    {
-        if (itr->id == userID)
-        {
-            cout << "Podaj nowe haslo: ";
-            itr->password = loadText();
-            cout << "Haslo zostalo zmienione" << endl;
-            system("pause");
-        }
-    }
-    saveAllUsersToFile (users);
 }
 
 Contact getSingleContactData(vector<Contact> &contacts, int contactID)
@@ -715,12 +519,12 @@ void editContact (vector<Contact> &contacts)
 int main()
 {
     vector<Contact> contacts;
-    vector<User> users;
+    User user;
     char choiceFromMenu;
     int menuView = 0;
     int userID = 0;
 
-    loadUsersFromFile (users);
+    user.loadUsersFromFile();
 
     while (true)
     {
@@ -737,7 +541,7 @@ int main()
             switch (choiceFromMenu)
             {
             case '1':
-                userID = login(users);
+                userID = user.login();
                 if (userID != 0)
                 {
                     loadContactsFromFile(contacts, userID);
@@ -745,7 +549,7 @@ int main()
                 }
                 break;
             case '2':
-                userRegistration(users);
+                user.userRegistration();
                 break;
             case '9':
                 exitProgram();
@@ -765,7 +569,6 @@ int main()
             cout << "4. Wyswietl wszystkich adresatow" << endl;
             cout << "5. Usun adresata" << endl;
             cout << "6. Edytuj adresata" << endl;
-            cout << "7. Zmien haslo" << endl;
             cout << "9. Wyloguj sie" << endl;
             cout << "Twoj wybor: ";
             cin >> choiceFromMenu;
@@ -789,9 +592,6 @@ int main()
                 break;
             case '6':
                 editContact (contacts);
-                break;
-            case '7':
-                changePassword(users, userID);
                 break;
             case '9':
                 menuView = 0;
